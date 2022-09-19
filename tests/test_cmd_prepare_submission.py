@@ -18,17 +18,17 @@ def test_cmd_prepare_and_unpack_submission_with_code_archive(
 ):
     # Prepare submission
     submission_archive = str(tmpdir / "submission.zip")
-    with capsys.disabled():
-        # Run with stdout/stderr capture disabled, because we are interested only in output during
-        # submission unpacking stage.
-        toolkit_main([
-            "prepare-submission",
-            dataset_json_file,
-            reference_detection_results_file,
-            sample_code_archive,
-            "--output-file",
-            submission_archive,
-        ])
+    toolkit_main([
+        "prepare-submission",
+        dataset_json_file,
+        reference_detection_results_file,
+        sample_code_archive,
+        "--output-file",
+        submission_archive,
+    ])
+
+    # Capture stdout and stderr in order to clear them
+    stdout, stderr = capsys.readouterr()
 
     # Expected contents
     expected_contents = {
@@ -70,17 +70,17 @@ def test_cmd_prepare_and_unpack_submission_with_code_dir(
 ):
     # Prepare submission
     submission_archive = str(tmpdir / "submission.zip")
-    with capsys.disabled():
-        # Run with stdout/stderr capture disabled, because we are interested only in output during
-        # submission unpacking stage.
-        toolkit_main([
-            "prepare-submission",
-            dataset_json_file,
-            reference_detection_results_file,
-            sample_code_dir,
-            "--output-file",
-            submission_archive,
-        ])
+    toolkit_main([
+        "prepare-submission",
+        dataset_json_file,
+        reference_detection_results_file,
+        sample_code_dir,
+        "--output-file",
+        submission_archive,
+    ])
+
+    # Capture stdout and stderr in order to clear them
+    stdout, stderr = capsys.readouterr()
 
     # Expected contents
     expected_contents = {

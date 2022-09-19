@@ -1,6 +1,6 @@
 # USV Obstacle Detection Challenge Evaluation Toolkit
 
-This repository provides source code of the evaluation toolkit for the
+This repository contains source code of the evaluation toolkit for the
 *USV Obstacle Detection Challenge*, hosted at the *1st Workshop on Maritime
 Computer Vision (MaCVi)* as part of the WACV2023.
 
@@ -37,14 +37,14 @@ and the older [MODD dataset](https://www.vicos.si/resources/modd).
 
 The algorithm should output the detections with rectangular axis-aligned
 bounding boxes of waterborne objects belonging to the following semantic
-classes: *vessel*, *person*, and *others*. The results should be stored
+classes: *vessel*, *person*, and *other*. The results should be stored
 in a single JSON file using the format described below.
 
 #### Results file format
 
 The results JSON file, expected by the evaluation tool, is very similar
 to the `mods.json` file from the MODS dataset, except that each frame
-object provides a `detections` array describing detections:
+object provides a `detections` array describing detected obstacles:
 
 ```json
 {
@@ -131,11 +131,11 @@ a string or an integer, with following values being recognized:
 In the above example, we included additional fields to make it easier
 to compare the structure to that of the `mods.json` file. The easiest
 way to generate the results file is, in fact, taking the data from the
-`mods.json` file and adding the `detections` arrays to the sequence
+`mods.json` file and adding the `detections` arrays to the frame
 objects.
 
 For reference, we provide exemplar result JSON files for the methods
-evaluated in the *Bovcon et al.* paper: MaskRCNN, FCOS, YOLOv4, and SSD:
+evaluated in the *Bovcon et al.* paper (MaskRCNN, FCOS, YOLOv4, and SSD):
 * [detection-results-original.zip](https://rokm.dynu.net/macvi2023_detection/detection-results-original.zip):
   this archive contains original JSON files, as provided by the authors.
 * [detection-results-minimal.zip](https://rokm.dynu.net/macvi2023_detection/detection-results-minimal.zip):
@@ -151,7 +151,7 @@ and YOLOv4 use string-based class `type`).
 ### 3. Install the evaluation toolkit
 
 The evaluation toolkit requires a recent version of python3 (>= 3.6)
-depends on `pycocotools`, `numpy`, and `opencv-python-headless` (or
+and depends on `pycocotools`, `numpy`, and `opencv-python-headless` (or
 a "regular" `opencv-python`).
 
 To prevent potential conflicts with python packages installed in the
@@ -168,16 +168,19 @@ current working directory.
 2. Activate the virtual environment:
 
 On Linux and macOS (assuming `bash` shell), run:
+
 ```
 . venv-usv/bin/activate
 ```
 
 On Windows, run:
+
 ```
 venv-usv/Scripts/activate
 ```
 
-3. Once virtual environment is available, update `pip`, `wheel`, and `setuptools`:
+3. Once virtual environment is activated, update `pip`, `wheel`, and `setuptools`:
+
 ```
 python3 -m pip install --upgrade pip wheel setuptools
 ```
@@ -196,7 +199,9 @@ and install it into your (virtual) environment. It should also create
 an executable called ``macvi-usv-odce-tool`` in your environment's
 scripts directory. Running
 
-˙˙˙macvi-usv-odce-tool --help```
+```
+macvi-usv-odce-tool --help
+```
 
 should display the help message:
 
@@ -238,8 +243,9 @@ using
 python3 -m macvi_usv_odce_toolkit
 ```
 
-instead. If neither works, the toolkit was either not installed, or
-you have forgotten to activate your virtual environment.
+instead of `macvi_usv_odce_tool`. If neither works, the toolkit was
+either not installed, or you have forgotten to activate your virtual
+environment.
 
 
 4b. Install the toolkit (alternative approach)
@@ -336,10 +342,47 @@ current working directory contains unpacked MODS dataset in `mods`
 sub-directory, the results JSON file called `results.json`, and source
 code archive called `source-code.zip`, run:
 
+```
+macvi-usv-odce-tool prepare-submission mods/mods.json results.json sample-code.zip
+```
+
 The output of the tool should look similar to:
 
-and it should generate a file called `submission.zip˙ in the current
-working directory.
+```
+MaCVi USV Obstacle Detection Challenge Evaluation Toolkit
+
+Settings:
+ - mode: 'prepare-submission'
+ - dataset JSON file: 'mods/mods.json'
+ - results JSON file: 'results.json'
+ - source code path: 'sample-code.zip'
+ - output file: 'submission.zip'
+
+Evaluating Setup 1...
+Evaluation complete in 13.08 seconds!
+Evaluating Setup 2...
+Evaluation complete in 12.17 seconds!
+Evaluating Setup 3...
+Evaluation complete in 14.96 seconds!
+
+Results: F_all F_small F_medium F_large
+Setup_1: 0.122 0.065 0.209 0.260
+Setup_2: 0.172 0.090 0.385 0.522
+Setup_3: 0.964 0.976 0.958 0.968
+
+Challenge results (F_avg, F_s1, F_s2, F_s3):
+0.419 0.122 0.172 0.964
+
+Preparing submission archive 'submission.zip'...
+Collecting raw results file 'results.json'...
+Collecting evaluation results file...
+Collecting source code from 'sample-code.zip'...
+
+Done!
+```
+
+and the tool should generate a file called `submission.zip˙ in the
+current working directory.
 
 To use a different name or a different target directory, you can provide
 a custom path via the `--output-file <filename>` command-line argument.
@@ -351,6 +394,6 @@ Once the submission archive is generated, you can submit it on the
 challenge's web page.
 
 Once the archive is submitted, the submission server backend will
-unpack its contents using the `unpack-submission` command, and
-optionally perform re-evaluation of the results using the local copy
-of the toolkit and the dataset annotations.
+unpack the archive's contents using the `unpack-submission` command,
+and (optionally) re-evaluate the results using the local copy of the
+toolkit and the dataset annotations.

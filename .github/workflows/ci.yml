@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    branches:
+      - '**'
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Download data files (macOS and linux)
+        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
+        run: |
+          wget -q https://rokm.dynu.net/macvi2023_detection/detection-results-minimal.zip -O $HOME/detection-results-minimal.zip
+          wget -q https://rokm.dynu.net/macvi2023_detection/mods-lite.zip -O $HOME/mods-lite.zip
+          wget -q https://rokm.dynu.net/macvi2023_detection/sample-code.zip -O $HOME/sample-code.zip
+
+      - name: Download data files (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          C:\msys64\usr\bin\wget.exe -q https://rokm.dynu.net/macvi2023_detection/detection-results-minimal.zip -O $HOME/detection-results-minimal.zip
+          C:\msys64\usr\bin\wget.exe -q https://rokm.dynu.net/macvi2023_detection/mods-lite.zip -O $HOME/mods-lite.zip
+          C:\msys64\usr\bin\wget.exe -q https://rokm.dynu.net/macvi2023_detection/sample-code.zip -O $HOME/sample-code.zip
+
+      - name: Unpack data files
+        run: |
+          python -m zipfile -e $HOME/detection-results-minimal.zip $HOME/reference-detection-results
+          python -m zipfile -e $HOME/mods-lite.zip $HOME/mods
+
+      - name: Set pip cache dir
+        run: echo "pip_cache_dir=$(pip cache dir)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Fetch pip cache
+        id: cache-target
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.pip_cache_dir }}
+          key: ${{ runner.os }}-${{ matrix.python-version }}
+
+      - name: Install toolkit
+        run: |
+          # Update pip.
+          python -m pip install --upgrade pip setuptools wheel
+
+          # Install toolkit.
+          pip install --progress-bar=off .
+
+          # Make sure the help options print.
+      - name: Display help message
+        run: |
+          macvi-usv-odce-tool --help
+
+      - name: Display help message (evaluate)
+        run: |
+          macvi-usv-odce-tool evaluate --help
+
+      - name: Display help message (prepare-submission)
+        run: |
+          macvi-usv-odce-tool prepare-submission --help
+
+      - name: Display help message (unpack-submission)
+        run: |
+          macvi-usv-odce-tool unpack-submission --help
+
+      - name: Set paths to data files for tests (macOS and linux)
+        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
+        shell: bash
+        run: |
+          echo "MACVI_USV_ODCE_TEST_DATASET_JSON=$HOME/mods/mods.json" >> $GITHUB_ENV
+          echo "MACVI_USV_ODCE_TEST_REFERENCE_RESULTS_DIR=$HOME/reference-detection-results" >> $GITHUB_ENV
+          echo "MACVI_USV_ODCE_TEST_SAMPLE_CODE_ARCHIVE=$HOME/sample-code.zip" >> $GITHUB_ENV
+
+      - name: Set paths to data files for tests (Windows)
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          echo "MACVI_USV_ODCE_TEST_DATASET_JSON=$(cygpath.exe -w $HOME/mods/mods.json)" >> $GITHUB_ENV
+          echo "MACVI_USV_ODCE_TEST_REFERENCE_RESULTS_DIR=$(cygpath.exe -w $HOME/reference-detection-results)" >> $GITHUB_ENV
+          echo "MACVI_USV_ODCE_TEST_SAMPLE_CODE_ARCHIVE=$(cygpath.exe -w $HOME/sample-code.zip)" >> $GITHUB_ENV
+
+      - name: Run tests
+        run: |
+          # Install pytest.
+          pip install --progress-bar=off pytest
+
+          # Run pytest.
+          pytest tests

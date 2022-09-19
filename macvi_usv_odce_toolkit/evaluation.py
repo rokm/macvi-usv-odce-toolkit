@@ -51,8 +51,8 @@ def convert_to_coco_structures(dataset_json_file, results_json_file, sequences=N
     -------
     coco_dataset : dict
         Dictionary containing dataset annotations in COCO-compatible data structure.
-    coco_results : dict
-        Dictionary containing detection results in COCO-compatible data structure.
+    coco_results : list
+        List containing detection results in COCO-compatible data structure.
     """
 
     assert mode in {'edge', 'dz', 'full'}
@@ -316,7 +316,7 @@ def evaluate_detection_results(dataset_json_file, results_json_file, sequences=N
     """
 
     # Convert annotations and results to COCO-compatible structures
-    dataset_dict, results_dict = convert_to_coco_structures(
+    dataset_dict, results_list = convert_to_coco_structures(
         dataset_json_file,
         results_json_file,
         sequences,
@@ -326,16 +326,14 @@ def evaluate_detection_results(dataset_json_file, results_json_file, sequences=N
 
     # Capture pycocotools' output to prevent spamming stdout with its diagnostic messages
     with contextlib.redirect_stdout(None):
-        # Load annotations and results into COCO helper classes. Use temporary files...
-        with tempfile.NamedTemporaryFile("w+") as fp:
-            json.dump(dataset_dict, fp, indent=2)
-            fp.seek(0)
-            coco_dataset = pycocotools.coco.COCO(fp.name)
+        # Initialize COCO helper classes from in-memory data, to avoid having to write them to temporary files...
+        coco_dataset = pycocotools.coco.COCO()
+        # This is equivalent to passing filename to pycocotools.coco.COCO()
+        coco_dataset.dataset = dataset_dict
+        coco_dataset.createIndex()
 
-        with tempfile.NamedTemporaryFile("w+") as fp:
-            json.dump(results_dict, fp, indent=2)
-            fp.seek(0)
-            coco_results = coco_dataset.loadRes(fp.name)
+        # coco_dataset.loadRes() can be passed either filename or a list
+        coco_results = coco_dataset.loadRes(results_list)
 
         # Create evaluation...
         coco_evaluation = pycocotools.cocoeval.COCOeval(coco_dataset, coco_results, iouType='bbox')
